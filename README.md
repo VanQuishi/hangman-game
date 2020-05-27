@@ -1,0 +1,3 @@
+This porject implements the game "hangman" using Ruby
+
+This is an ongoing project...
