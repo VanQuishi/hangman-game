@@ -1,4 +1,4 @@
-
+require "csv"
 
 class Hangman
     attr_accessor :player_name
@@ -7,10 +7,10 @@ class Hangman
 
     public
     
-        def initialize(player_name,misses=[],corrects=[],stage=0)
+        def initialize(player_name,misses=[],corrects=[],stage=0,key_word = find_key_word("5desk.txt").chomp)
             @player_name = player_name
-            @key_word = find_key_word("5desk.txt").chomp
-            #@key_word = "corpsman"
+            #@key_word = find_key_word("5desk.txt").chomp
+            @key_word = key_word
             @misses = misses
             @corrects = corrects
             @stage = stage
@@ -24,34 +24,77 @@ class Hangman
             display_corrects()
             display_misses()
 
-            while @stage < 6 do 
-                p @corrects
-                p @misses
+            print "Do you want to save the game?(Y/n)"
+            choice = gets.chomp
+            if choice.downcase == 'y'
+                save_game()
+            else
+                while @stage < 6 do 
+                    #p @corrects
+                    #p @misses
 
-                if @corrects.join().downcase == @key_word.downcase   #this condition has problem
-                    puts File.read("assets/winner.txt")
-                    break
+                    if @corrects.length == @key_word.length 
+                        puts File.read("assets/winner.txt")
+                        break
+                    end
+
+                    print "Guess a letter: "
+                    guess = gets.chomp.downcase
+                    is_correct_guess = hit_or_miss(guess)
+
+                    if is_correct_guess == true
+                        puts "Nice guess!!!"
+                    else
+                        puts "Wrong :("
+                        @stage += 1
+                        #puts "You have #{6-@stage} lives left."
+                    end
+
+                    display_hangman()
+                    display_corrects()
+                    display_misses()
+
+                    if @stage == 6
+                        puts "The secret word is #{@key_word}"
+                        break
+                    end
+
+                    print "Do you want to save the game?(Y/n)"
+                    choice = gets.chomp
+                    if choice.downcase == 'y'
+                        save_game()
+                        break
+                    else
+                        next
+                    end
                 end
+            end
+        end
 
-                print "Guess a letter: "
-                guess = gets.chomp.downcase
-                is_correct_guess = hit_or_miss(guess)
+        def self.load_game() #PROBLEM!!!
+            puts "List of load game: "
+            contents = CSV.open 'assets/saved_games.csv', headers: true, header_converters: :symbol
 
-                if is_correct_guess == true
-                    puts "Nice guess!!!"
-                else
-                    puts "Wrong :("
-                    @stage += 1
-                    #puts "You have #{6-@stage} lives left."
-                end
+            contents.each do |row|
+                puts "ID: #{row[:id]}   Username: #{row[:player_name]}"
+            end
 
-                display_hangman()
-                display_corrects()
-                display_misses()
+            file = CSV.open 'assets/saved_games.csv', headers: true, header_converters: :symbol
+            print "Enter the game ID that you want to continue: "
 
-                if @stage == 6
-                    puts "The secret word is #{@key_word}"
-                    break
+            match = gets.chomp
+            
+            file.each do |row|  #check if each variables are loaded correctly
+                #p row[:id]
+                if row[:id] == match
+                    puts "match!!!"
+                    load_player_name = row[:player_name]
+                    load_misses = row[:misses].split()
+                    load_corrects = row[:corrects].split()
+                    load_stage = row[:stage].to_i()
+                    load_key_word = row[:key_word]
+                    player = Hangman.new(load_player_name, load_misses, load_corrects, load_stage, load_key_word)
+                    player.game()
                 end
             end
         end
@@ -105,23 +148,47 @@ class Hangman
 
         def hit_or_miss(guess)
             if @key_word.downcase.include?(guess)
-                @corrects.push(guess)
+                #make sure repeated letter is added multiple times 
+                #so that the length of corrects array will be equal with the keyword
+                @key_word.split("").each do |letter|     
+                    if letter.downcase == guess.downcase
+                        @corrects.push(guess)
+                    end
+                end
                 return true
             else
                 @misses.push(guess)
                 return false
             end
         end
+
+        def save_game()
+            current_size = CSV.read("assets/saved_games.csv").size
+            p "current size: #{current_size}"
+            id = current_size + 1
+            p "this user id: #{id}"
+            CSV.open("assets/saved_games.csv", "a+") do |csv|
+                csv << ["#{id}", "#{@player_name}", "#{@misses.join()}", "#{@corrects.join()}", "#{@stage}", "#{@key_word}"]
+            end
+        end
+
+        
 end
 
 
+print "New game or Load game?(N/l): "
+option = gets.chomp
 
-print "What is your name? "
-name = gets.chomp
+if option.downcase == 'l'
+    Hangman.load_game()
+else
+    print "What is your name? "
+    name = gets.chomp
 
-player = Hangman.new(name)
-puts "keyword: #{player.key_word}"
-player.game()
+    player = Hangman.new(name)
+    puts "keyword: #{player.key_word}"
+    player.game()
+end
 
 
 
