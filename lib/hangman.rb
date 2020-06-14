@@ -2,12 +2,13 @@ require "csv"
 
 class Hangman
     attr_accessor :player_name
-    attr_reader :misses, :corrects, :stage
+    attr_reader :misses, :corrects, :stage, :id
     attr_reader :key_word  #for the sake of debugging. Take this out when finished
 
     public
     
-        def initialize(player_name,misses=[],corrects=[],stage=0,key_word = find_key_word("5desk.txt").chomp)
+        def initialize(player_name,misses=[],corrects=[],stage=0,key_word = find_key_word("5desk.txt"),id = -1)
+            @id = id
             @player_name = player_name
             #@key_word = find_key_word("5desk.txt").chomp
             @key_word = key_word
@@ -71,7 +72,7 @@ class Hangman
             end
         end
 
-        def self.load_game() #PROBLEM!!!
+        def self.load_game() 
             puts "List of load game: "
             contents = CSV.open 'assets/saved_games.csv', headers: true, header_converters: :symbol
 
@@ -84,16 +85,17 @@ class Hangman
 
             match = gets.chomp
             
-            file.each do |row|  #check if each variables are loaded correctly
-                #p row[:id]
+            file.each do |row|  
+                
                 if row[:id] == match
                     puts "match!!!"
+                    load_id = row[:id].to_i()
                     load_player_name = row[:player_name]
-                    load_misses = row[:misses].split()
-                    load_corrects = row[:corrects].split()
+                    load_misses = row[:misses].split("")
+                    load_corrects = row[:corrects].split("")
                     load_stage = row[:stage].to_i()
                     load_key_word = row[:key_word]
-                    player = Hangman.new(load_player_name, load_misses, load_corrects, load_stage, load_key_word)
+                    player = Hangman.new(load_player_name, load_misses, load_corrects, load_stage, load_key_word, load_id)
                     player.game()
                 end
             end
@@ -163,16 +165,32 @@ class Hangman
         end
 
         def save_game()
-            current_size = CSV.read("assets/saved_games.csv").size
-            p "current size: #{current_size}"
-            id = current_size + 1
-            p "this user id: #{id}"
-            CSV.open("assets/saved_games.csv", "a+") do |csv|
-                csv << ["#{id}", "#{@player_name}", "#{@misses.join()}", "#{@corrects.join()}", "#{@stage}", "#{@key_word}"]
+            if @id == -1
+                current_size = CSV.read("assets/saved_games.csv").size
+                p "current size: #{current_size}"
+                id = current_size + 1
+                p "this user id: #{id}"
+                CSV.open("assets/saved_games.csv", "a+") do |csv|
+                    csv << ["#{id}", "#{@player_name}", "#{@misses.join()}", "#{@corrects.join()}", "#{@stage}", "#{@key_word}"]
+                end
+            else  #problem at line 183
+                file = CSV.read("assets/saved_games.csv")
+            
+                edited_ows = file.each_with_index.map do |row, index|
+                    if index == @id
+                        row[2] = "#{@misses.join()}"
+                        row[3] = "#{@corrects.join()}"
+                        row[4] = "#{@stage.to_s()}"
+                    end
+                end
+
+                CSV.open("assets/saved_games.csv", "wb") do |csv|
+                    file.each do |row| 
+                        csv << row
+                    end
+                end
             end
         end
-
-        
 end
 
 
