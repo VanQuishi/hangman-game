@@ -10,7 +10,6 @@ class Hangman
         def initialize(player_name,misses=[],corrects=[],stage=0,key_word = find_key_word("5desk.txt"),id = -1)
             @id = id
             @player_name = player_name
-            #@key_word = find_key_word("5desk.txt").chomp
             @key_word = key_word
             @misses = misses
             @corrects = corrects
@@ -31,8 +30,6 @@ class Hangman
                 save_game()
             else
                 while @stage < 6 do 
-                    #p @corrects
-                    #p @misses
 
                     if @corrects.length == @key_word.length 
                         puts File.read("assets/winner.txt")
@@ -48,7 +45,6 @@ class Hangman
                     else
                         puts "Wrong :("
                         @stage += 1
-                        #puts "You have #{6-@stage} lives left."
                     end
 
                     display_hangman()
@@ -150,8 +146,7 @@ class Hangman
 
         def hit_or_miss(guess)
             if @key_word.downcase.include?(guess)
-                #make sure repeated letter is added multiple times 
-                #so that the length of corrects array will be equal with the keyword
+                
                 @key_word.split("").each do |letter|     
                     if letter.downcase == guess.downcase
                         @corrects.push(guess)
@@ -173,7 +168,7 @@ class Hangman
                 CSV.open("assets/saved_games.csv", "a+") do |csv|
                     csv << ["#{id}", "#{@player_name}", "#{@misses.join()}", "#{@corrects.join()}", "#{@stage}", "#{@key_word}"]
                 end
-            else  #problem at line 183
+            else  
                 file = CSV.read("assets/saved_games.csv")
             
                 edited_ows = file.each_with_index.map do |row, index|
@@ -204,82 +199,5 @@ else
     name = gets.chomp
 
     player = Hangman.new(name)
-    puts "keyword: #{player.key_word}"
     player.game()
 end
-
-
-
-=begin
-word = "Hangman"
-guess = 'z'
-
-misses = []
-corrects = []
-
-if word.downcase.include?(guess)
-    corrects.push(guess)
-else
-    misses.push(guess)
-end
-p corrects
-p misses
-=end
-
-=begin
-stage = 6
-if stage == 0
-    puts File.read("assets/hm0.txt")
-elsif stage == 6
-    puts File.read("assets/hm6.txt")
-end
-=end
-
-=begin
-nin = Hangman.new("nin")
-p nin.key_word
-p nin.misses
-p nin.corrects
-p nin.stage
-p nin.player_name
-=end
-
-=begin
-misses = ['j','k','o']
-misses_string = misses.join(', ')
-p "misses: #{misses_string}"
-=end
-
-=begin
-word = "Lightning"
-corrects = ['i','l']
-for i in 0..(word.length-1)
-    if corrects.include?(word[i].downcase)
-        print "#{word[i]} "
-    else
-        print '_ '
-    end
-end
-puts "\n"
-p word.include?('z')
-=end
-
-
-
-
-
-=begin
-    def find_key_word(filename)
-
-    lines = File.readlines(filename)
-    word = lines[rand(lines.length)].chomp
-
-    while word.length < 5 || word.length > 12 do
-        word = lines[rand(lines.length)].chomp
-    end
-    
-    return word
-end
-
-p find_key_word("5desk.txt")
-=end
